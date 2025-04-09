@@ -7,7 +7,7 @@ pub fn tif_to_cog(
     input_path: &Path,
     output_path: Option<&Path>,
     overwrite: bool,
-) -> Result<(), String> {
+) -> Result<String, String> {
     // Check if the input file exists
     if !input_path.exists() {
         return Err(format!("Error: The file {:?} does not exist.", input_path));
@@ -76,5 +76,5 @@ pub fn tif_to_cog(
         .create_copy(&driver, out_path.to_str().unwrap(), &creation_options)
         .map_err(|e| format!("Failed to create COG: {:?}", e))?;
 
-    Ok(())
+    Ok(out_path.file_name().unwrap().to_str().unwrap().to_string())
 }

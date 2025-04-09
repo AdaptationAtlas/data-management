@@ -4,6 +4,14 @@
 
 ---
 
+## Why?? Performance
+Sometimes large folders of raster and vector files need converted. Although this can be done through an R script, this package is much faster and is designed to handle errors better. 
+
+In prelim testing, converting a folder of 340 geojson files ranging in size from 600mb to < 1mb:
+- R terra with multicore: 4 minutes 3 seconds
+- This package: 1 minute 15 seconds
+
+
 ## Features
 
 - Inspect metadata of raster and vector files

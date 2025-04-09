@@ -2,6 +2,7 @@ use gdal::Dataset;
 // use gdal::errors::Result;
 use gdal::{DriverManager, vector::*};
 use std::path::{Path, PathBuf};
+use gdal::config;
 
 /// Converts a vector file to GeoParquet format - simplified version
 ///
@@ -9,7 +10,8 @@ use std::path::{Path, PathBuf};
 /// * `input_path` - Path to the input vector file (any GDAL-supported format)
 /// * `output_path` - Path where the GeoParquet file will be written
 
-pub fn vector_to_geoparquet(input_path: &Path, output_path: Option<&Path>) -> Result<(), String> {
+pub fn vector_to_geoparquet(input_path: &Path, output_path: Option<&Path>) -> Result<String, String> {
+    let _ = config::set_config_option("OGR_GEOJSON_MAX_OBJ_SIZE", "0");
     // Validate input path
     if !input_path.exists() {
         return Err(format!(
@@ -32,10 +34,13 @@ pub fn vector_to_geoparquet(input_path: &Path, output_path: Option<&Path>) -> Re
     };
 
     // Open the source dataset
-    let dataset_src = Dataset::open(input_path).expect(&format!(
-        "Failed to open source dataset: {}",
-        input_path.display()
-    ));
+    let dataset_src = Dataset::open(input_path).map_err(|e| format!("Failed to open source dataset {}: {}", input_path.display(), e))?;
+    
+    
+    // .expect(&format!(
+    //     "Failed to open source dataset: {}",
+    //     input_path.display()
+    // ));
 
     // Ensure dataset has layers
     if dataset_src.layer_count() == 0 {
@@ -44,7 +49,8 @@ pub fn vector_to_geoparquet(input_path: &Path, output_path: Option<&Path>) -> Re
 
     let mut layer_src = dataset_src
         .layer(0)
-        .expect("Failed to access first layer of dataset");
+        .map_err(|e| format!("Failed to access first layer of dataset {}: {}", input_path.display(), e))?;
+
 
     let spatial_ref_src = layer_src.spatial_ref();
 
@@ -56,7 +62,8 @@ pub fn vector_to_geoparquet(input_path: &Path, output_path: Option<&Path>) -> Re
         .collect::<Vec<_>>();
 
     // Create output dataset with Parquet driver
-    let drv = DriverManager::get_driver_by_name("Parquet").expect("Failed to get Parquet driver");
+    let drv = DriverManager::get_driver_by_name("Parquet")
+    .map_err(|e| format!("Failed to get Parquet Driver: {}", e))?;
 
     let out_path_str = out_path
         .to_str()
@@ -125,5 +132,5 @@ pub fn vector_to_geoparquet(input_path: &Path, output_path: Option<&Path>) -> Re
         out_path.display()
     );
 
-    Ok(())
+    Ok(out_path.file_name().unwrap().to_str().unwrap().to_string())
 }

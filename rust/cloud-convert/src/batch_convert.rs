@@ -5,15 +5,20 @@ use std::fs;
 use std::path::Path;
 use std::path::PathBuf;
 
+pub struct BatchSummary {
+    pub successful: Vec<(PathBuf, String)>,
+    pub failed: Vec<(PathBuf, String)>,
+}
+
 fn batch_convert<F>(
     input_path: &Path,
     output_dir: Option<&Path>,
     extensions: &[&str],
     file_type: &str,
     converter: F,
-) -> Result<(), String>
+) -> Result<BatchSummary, String>
 where
-    F: Fn(&Path, Option<&Path>) -> Result<(), String> + Send + Sync,
+    F: Fn(&Path, Option<&Path>) -> Result<String, String> + Send + Sync,
 {
     if !input_path.is_dir() {
         return Err(format!(
@@ -53,45 +58,51 @@ where
         ));
     }
 
-    let errors: Vec<(PathBuf, String)> = files
-        .par_iter()
-        .filter_map(|path| {
-            // Prepare output path with file name from input
-            let file_output_path = output_dir.map(|out_dir| {
-                let file_name = path.file_name().unwrap_or_default();
-                out_dir.join(file_name)
-            });
+    let results: Vec<Result<(PathBuf, String), (PathBuf, String)>> = files
+    .par_iter()
+    .map(|path| {
+        let file_output_path = output_dir.map(|out_dir| {
+            let file_name = path.file_name().unwrap_or_default();
+            out_dir.join(file_name)
+        });
 
-            match converter(path, file_output_path.as_deref()) {
-                Ok(_) => None,
-                Err(e) => Some((path.clone(), e)),
-            }
-        })
-        .collect();
+        match converter(path, file_output_path.as_deref()) {
+            Ok(output) => Ok((path.clone(), output)),
+            Err(e) => Err((path.clone(), e)),
+        }
+    })
+    .collect();
 
-    let total = files.len();
-    let failed = errors.len();
-    let succeeded = total - failed;
+    let (successful, failed): (Vec<_>, Vec<_>) = results.into_iter().partition(Result::is_ok);
 
-    if failed > 0 {
+    let successful = successful.into_iter().map(Result::unwrap).collect::<Vec<_>>();
+    let failed = failed.into_iter().map(Result::unwrap_err).collect::<Vec<_>>();
+
+    println!("{} files failed", failed.len());
+
+    if !failed.is_empty() {
         let mut error_msg = format!(
             "Converted {}/{} files. Errors occurred:\n",
-            succeeded, total
+            successful.len(),
+            files.len()
         );
-        for (path, err) in errors {
+        for (path, err) in &failed {
             error_msg.push_str(&format!("- {}: {}\n", path.display(), err));
         }
-        Err(error_msg)
-    } else {
-        Ok(())
+        eprintln!("{}", error_msg);
     }
+    
+    Ok(BatchSummary {
+        successful,
+        failed,
+    })
 }
 
 pub fn batch_convert_cog(
     input_path: &Path,
     output_dir: Option<&Path>,
     overwrite: bool,
-) -> Result<(), String> {
+) -> Result<BatchSummary, String> {
     let raster_exts = ["tif", "tiff", "tff", "asc", "img"];
     batch_convert(
         input_path,
@@ -102,7 +113,7 @@ pub fn batch_convert_cog(
     )
 }
 
-pub fn batch_convert_gpq(input_path: &Path, output_dir: Option<&Path>) -> Result<(), String> {
+pub fn batch_convert_gpq(input_path: &Path, output_dir: Option<&Path>) -> Result<BatchSummary, String> {
     let vector_exts = ["gpkg", "json", "geojson", "fgb", "kml", "gpx", "shp"];
     batch_convert(
         input_path,
