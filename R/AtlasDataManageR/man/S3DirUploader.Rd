@@ -24,7 +24,9 @@ Requires the 'future' and 'future.apply' packages to be installed.
 
 \item{\code{public}}{logical. Whether to make uploaded folder public read/list.}
 
-\item{\code{recursive}}{logical. Whether to include sub-directories in upload.
+\item{\code{recursive}}{logical. Whether to include sub-directories in upload.}
+
+\item{\code{s3_dir}}{character. Highest level S3 directory path. All files are uploaded under this.
 Initialize S3DirUploader}
 }
 \if{html}{\out{</div>}}
@@ -73,6 +75,7 @@ Creates a new S3DirUploader instance of \link[R6:R6Class]{R6} class.
   upload_id,
   local_dir,
   bucket,
+  s3_dir,
   pattern_ft = NULL,
   name_fn = NULL,
   s3_inst = NULL,
@@ -89,6 +92,8 @@ Creates a new S3DirUploader instance of \link[R6:R6Class]{R6} class.
 \item{\code{local_dir}}{character. Path to the local directory to upload.}
 
 \item{\code{bucket}}{character. Name of the target S3 bucket.}
+
+\item{\code{s3_dir}}{character. S3 directory path to upload to.}
 
 \item{\code{pattern_ft}}{character or NULL. Regex pattern to filter files (default: NULL).}
 
