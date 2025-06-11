@@ -59,24 +59,30 @@ where
     }
 
     let results: Vec<Result<(PathBuf, String), (PathBuf, String)>> = files
-    .par_iter()
-    .map(|path| {
-        let file_output_path = output_dir.map(|out_dir| {
-            let file_name = path.file_name().unwrap_or_default();
-            out_dir.join(file_name)
-        });
+        .par_iter()
+        .map(|path| {
+            let file_output_path = output_dir.map(|out_dir| {
+                let file_name = path.file_name().unwrap_or_default();
+                out_dir.join(file_name)
+            });
 
-        match converter(path, file_output_path.as_deref()) {
-            Ok(output) => Ok((path.clone(), output)),
-            Err(e) => Err((path.clone(), e)),
-        }
-    })
-    .collect();
+            match converter(path, file_output_path.as_deref()) {
+                Ok(output) => Ok((path.clone(), output)),
+                Err(e) => Err((path.clone(), e)),
+            }
+        })
+        .collect();
 
     let (successful, failed): (Vec<_>, Vec<_>) = results.into_iter().partition(Result::is_ok);
 
-    let successful = successful.into_iter().map(Result::unwrap).collect::<Vec<_>>();
-    let failed = failed.into_iter().map(Result::unwrap_err).collect::<Vec<_>>();
+    let successful = successful
+        .into_iter()
+        .map(Result::unwrap)
+        .collect::<Vec<_>>();
+    let failed = failed
+        .into_iter()
+        .map(Result::unwrap_err)
+        .collect::<Vec<_>>();
 
     println!("{} files failed", failed.len());
 
@@ -91,11 +97,8 @@ where
         }
         eprintln!("{}", error_msg);
     }
-    
-    Ok(BatchSummary {
-        successful,
-        failed,
-    })
+
+    Ok(BatchSummary { successful, failed })
 }
 
 pub fn batch_convert_cog(
@@ -113,7 +116,10 @@ pub fn batch_convert_cog(
     )
 }
 
-pub fn batch_convert_gpq(input_path: &Path, output_dir: Option<&Path>) -> Result<BatchSummary, String> {
+pub fn batch_convert_gpq(
+    input_path: &Path,
+    output_dir: Option<&Path>,
+) -> Result<BatchSummary, String> {
     let vector_exts = ["gpkg", "json", "geojson", "fgb", "kml", "gpx", "shp"];
     batch_convert(
         input_path,
@@ -123,4 +129,3 @@ pub fn batch_convert_gpq(input_path: &Path, output_dir: Option<&Path>) -> Result
         |path, out_path| vector_to_geoparquet(path, out_path),
     )
 }
-

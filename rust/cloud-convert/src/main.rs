@@ -3,11 +3,13 @@ use std::path::PathBuf;
 
 mod batch_convert;
 mod datainfo;
+mod rast_qaqc;
 mod tif2cog;
 mod vect2gpq;
 
 use batch_convert::*;
 use datainfo::*;
+use rast_qaqc::*;
 use tif2cog::*;
 use vect2gpq::*;
 
@@ -38,6 +40,17 @@ enum Commands {
         path: PathBuf,
         #[arg(short, long)]
         out: Option<PathBuf>,
+    },
+
+    /// Get stats for QAQC for a GeoTIFF
+    RunQAQC {
+        path: PathBuf,
+        #[arg(short, long, default_value_t = false)]
+        quantiles: bool,
+        #[arg(short, long, default_value_t = 100)]
+        pct_check: u8,
+        #[arg(short, long, default_value_t = OutputFormat::Csv)]
+        output_format: OutputFormat,
     },
 }
 
@@ -74,6 +87,22 @@ fn main() {
             } else {
                 if let Err(e) = vector_to_geoparquet(&path, out.as_deref()) {
                     eprintln!("Single GPQ conversion failed: {}", e);
+                }
+            }
+        }
+        Commands::RunQAQC {
+            path,
+            pct_check,
+            output_format,
+            quantiles,
+        } => {
+            if path.is_dir() {
+                if let Err(e) = batch_qaqc(&path, pct_check as f32, quantiles, output_format) {
+                    eprintln!("Batch QAQC failed: {}", e);
+                }
+            } else {
+                if let Err(e) = single_qaqc(&path, quantiles) {
+                    eprintln!("Single QAQC failed: {}", e);
                 }
             }
         }

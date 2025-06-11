@@ -14,123 +14,6 @@ validate_s3_class <- function(s3) {
   all(required_methods %in% names(s3))
 }
 
-
-#' Upload a file to S3 with retry and multipart support
-#'
-#' Uploads a file to an S3 bucket, using multipart upload for large files and retrying on failure.
-#'
-#' @param local_path character. Path to the local file.
-#' @param s3_key character. Key for the object in the S3 bucket.
-#' @param s3 [paws.storage][paws.storage::s3] An initialized S3 client object.
-#' @param bucket character. Target S3 bucket name.
-#' @param max_tries integer. Maximum number of upload attempts.
-#' @return list. A list of upload details and result.
-#' @export
-s3_upload <- function(local_path, s3_key, s3, bucket, max_tries = 3) {
-  if (!file.exists(local_path)) stop("File not found: ", local_path)
-  file_size <- file.info(local_path)$size
-  for (i in seq_len(max_tries)) {
-    success <- tryCatch(
-      {
-        if (file_size > 5 * 2^20) {
-          s3_multipart(local_path, s3_key, s3, bucket, 5)
-        } else {
-          con <- file(local_path, "rb")
-          on.exit(close(con))
-          s3$put_object(
-            Body = con,
-            Bucket = bucket,
-            Key = s3_key
-          )
-        }
-      },
-      error = function(e) {
-        FALSE
-      }
-    )
-    if (success) {
-      return(TRUE)
-      break
-    }
-  }
-  return(list(local = local_path, s3 = s3_key, success = success))
-}
-
-#' Perform multipart upload to S3
-#'
-#' Uploads a large file to an S3 bucket using the multipart upload API. Aborts the upload on failure.
-#'
-#' @param local_path character. Path to the local file.
-#' @param s3_key character. Key for the object in the S3 bucket.
-#' @param s3 [paws.storage][paws.storage::s3] An initialized S3 client object.
-#' @param bucket character. Target S3 bucket name.
-#' @param part_mb numeric. Part size in megabytes (minimum 5 MB).
-#' @return list. Result of the complete multipart upload request.
-#' @export
-s3_multipart <- function(local_path, s3_key, s3, bucket, part_mb = 5) {
-  stopifnot("Part size cannot be less than 5 MB" = part_mb >= 5)
-  part_size <- part_mb * 2^20
-
-  upload <- s3$create_multipart_upload(Bucket = bucket, Key = s3_key)
-  upload_id <- upload$UploadId
-
-  con <- file(local_path, "rb")
-  on.exit(close(con), add = TRUE)
-
-  parts <- list()
-  part_number <- 1
-  resp <- NULL
-
-  # Ensure we abort the multipart upload if anything fails
-  on.exit(
-    {
-      if (is.null(resp) || inherits(resp, "try-error")) {
-        message("Aborting failed multipart upload...")
-        try(
-          s3$abort_multipart_upload(
-            Bucket = bucket,
-            Key = s3_key,
-            UploadId = upload_id
-          ),
-          silent = TRUE
-        )
-      }
-    },
-    add = TRUE
-  )
-
-  resp <- try({
-    repeat {
-      part_data <- readBin(con, "raw", n = part_size)
-      if (length(part_data) == 0) break
-
-      part_resp <- s3$upload_part(
-        Body = part_data,
-        Bucket = bucket,
-        Key = s3_key,
-        PartNumber = part_number,
-        UploadId = upload_id
-      )
-
-      parts[[part_number]] <- list(
-        ETag = part_resp$ETag,
-        PartNumber = part_number
-      )
-
-      part_number <- part_number + 1
-    }
-
-    s3$complete_multipart_upload(
-      Bucket = bucket,
-      Key = s3_key,
-      MultipartUpload = list(Parts = parts),
-      UploadId = upload_id
-    )
-  })
-
-  return(resp)
-}
-
 #' S3 Directory Uploader Class
 #'
 #' An R6 class for uploading directories and files to Amazon S3 with support
@@ -153,6 +36,9 @@ S3DirUploader <- R6::R6Class(
     public = NULL,
     #' @field recursive logical. Whether to include sub-directories in upload.
     recursive = FALSE,
+    #' @field s3_dir character. Highest level S3 directory path. All files are uploaded under this.
+    s3_dir = NULL,
+
     #' Initialize S3DirUploader
     #'
     #' @description
@@ -161,6 +47,7 @@ S3DirUploader <- R6::R6Class(
     #' @param upload_id character. Unique identifier for this upload session.
     #' @param local_dir character. Path to the local directory to upload.
     #' @param bucket character. Name of the target S3 bucket.
+    #' @param s3_dir character. S3 directory path to upload to.
     #' @param pattern_ft character or NULL. Regex pattern to filter files (default: NULL).
     #' @param name_fn function or NULL. Function to transform file names for S3 keys (default: NULL).
     #' @param s3_inst [paws.storage][paws.storage::s3] or NULL.
@@ -173,6 +60,7 @@ S3DirUploader <- R6::R6Class(
       upload_id,
       local_dir,
       bucket,
+      s3_dir,
       pattern_ft = NULL,
       name_fn = NULL,
       s3_inst = NULL,
@@ -198,6 +86,9 @@ S3DirUploader <- R6::R6Class(
         ),
         "`recursive` is required to be a logical vector" = (
           is.logical(recursive)
+        ),
+        "`s3_dir` is required to be a single character string" = (
+          is.character(s3_dir) && length(s3_dir) == 1
         )
       )
 
@@ -210,10 +101,12 @@ S3DirUploader <- R6::R6Class(
         full.names = TRUE,
         recursive = recursive
       )
-      private$.name_fn <- name_fn %||% \(x) x
+      private$.name_fn <- name_fn %||% \(x) basename(x)
+      self$s3_dir <- s3_dir
       self$bucket <- bucket
       self$public <- public
       self$upload_id <- upload_id
+      self$recursive <- recursive
     },
     #' @description
     #' Print class.
@@ -223,10 +116,12 @@ S3DirUploader <- R6::R6Class(
       cat("  Bucket:      ", self$bucket, "\n")
       cat("  Public:      ", self$public, "\n")
       cat("  Local Dir:   ", private$.local_dir, "\n")
+      cat("  S3 Dir:      ", self$s3_dir, "\n")
       cat("  Upload Date: ", private$.date, "\n")
-      cat("  # Files:     ", private$.n_files)
+      cat("  # Files:     ", length(private$.files), "\n")
       cat("  Complete:    ", private$.complete, "\n")
       cat("  Failed:      ", length(private$.failed), " files\n")
+      cat("  S3 ACL:      ", private$.acl, "\n")
       invisible(self)
     },
     #' @description
@@ -234,7 +129,12 @@ S3DirUploader <- R6::R6Class(
     #' @param x integer. Numbers of files to test.
     dry_run = \(x = 1) {
       files <- private$.files[c(1:x)]
-      outputs <- sprintf("s3://%s/%s", self$bucket, private$.name_fn(files))
+      outputs <- sprintf(
+        "s3://%s/%s/%s",
+        self$bucket,
+        self$s3_dir,
+        private$.name_fn(files)
+      )
       return(outputs)
     },
     #' @description
@@ -269,8 +169,9 @@ S3DirUploader <- R6::R6Class(
       }
       start_time <- Sys.time()
       s3_paths <- sprintf(
-        "s3://%s/%s",
+        "s3://%s/%s/%s",
         self$bucket,
+        self$s3_dir,
         private$.name_fn(private$.files)
       )
       results_ls <- vector(mode = "list", length = private$.n_files)
@@ -290,6 +191,7 @@ S3DirUploader <- R6::R6Class(
 
       private$.results <- results_ls
       private$.failed <- Filter(\(x) isFALSE(x$success), results_ls)
+      private$.acl <- private$set_acl()
       return(results_ls)
     },
     #' @description
@@ -323,8 +225,9 @@ S3DirUploader <- R6::R6Class(
       start_time <- Sys.time()
 
       s3_paths <- sprintf(
-        "s3://%s/%s",
+        "s3://%s/%s/%s",
         self$bucket,
+        self$s3_dir,
         private$.name_fn(private$.files)
       )
       future::plan(strategy = type, workers = n_cores)
@@ -343,12 +246,13 @@ S3DirUploader <- R6::R6Class(
       private$.time <- difftime(end_time, start_time, units = "secs")
       private$.results <- results_ls
       private$.failed <- Filter(\(x) isFALSE(x$success), results_ls)
+      private$.acl <- private$set_acl()
       return(results_ls)
     }
   ),
   private = list(
-    .n_files = NULL,
     .files = NULL,
+    .n_files = NULL,
     .failed = NULL,
     .complete = FALSE,
     .time = NULL,
@@ -357,8 +261,26 @@ S3DirUploader <- R6::R6Class(
     .pattern_ft = NULL,
     .name_fn = NULL,
     s3_inst = NULL,
+    .acl = NULL,
     set_acl = \() {
-      stop("This function needs to be written") # TODO: add in acl function
+      if (self$public) {
+        tryCatch(
+          {
+            set_uri_public(
+              s3_uri = self$s3_dir,
+              self$bucket,
+              directory = TRUE,
+              s3_inst = private$s3_inst
+            )
+            return("public")
+          },
+          error = function(e) {
+            return(paste0("Setting ACL failed: ", e$message))
+          }
+        )
+      } else {
+        return("private")
+      }
     }
   ),
   active = list(
@@ -429,7 +351,7 @@ S3DirUploader <- R6::R6Class(
             private$.local_dir,
             pattern = x,
             full.names = TRUE,
-            recursive = recursive
+            recursive = self$recursive
           )
         }
       }
@@ -439,7 +361,7 @@ S3DirUploader <- R6::R6Class(
       if (missing(x)) {
         if (!is.null(private$.files) && length(private$.files) > 0) {
           cat("Example transformation:\n")
-          example_file <- basename(private$.files[1])
+          example_file <- private$.files[1]
           cat("Input: ", example_file, "\n")
           cat("Output:", private$.name_fn(example_file), "\n")
         }
@@ -451,3 +373,23 @@ S3DirUploader <- R6::R6Class(
     }
   )
 )
+
+# # Tests
+# t <- S3DirUploader$new(
+#   upload_id = "test",
+#   local_dir = "~/Downloads",
+#   bucket = "my-bucket",
+#   s3_dir = "test"
+# )
+#
+# t$dry_run(10)
+# t$pattern_ft <- ".tif$|.parquet$"
+# t$dry_run(10)
+#
+# t$name_fn <- function(x) {
+#   paste0("new_name", "/", basename(x))
+# }
+#
+# t$public
+#
+# t$dry_run()
