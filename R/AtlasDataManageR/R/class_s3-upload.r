@@ -163,19 +163,18 @@ S3DirUploader <- R6::R6Class(
     #'
     #' @return List of upload results for each file.
     upload_files = \() {
-      valid_s3 <- self$validate_con
+      valid_s3 <- self$validate_con()
       if (!valid_s3) {
         stop("S3 connection not valid")
       }
       start_time <- Sys.time()
       s3_paths <- sprintf(
-        "s3://%s/%s/%s",
-        self$bucket,
+        "%s/%s",
         self$s3_dir,
         private$.name_fn(private$.files)
       )
-      results_ls <- vector(mode = "list", length = private$.n_files)
-      for (i in seq_len(private$.n_files)) {
+      results_ls <- vector(mode = "list", length = length(private$.files))
+      for (i in seq_along(private$.files)) {
         # faster than lapply when not parallel
         results_ls[[i]] <- s3_upload(
           local_path = private$.files[i],
@@ -188,10 +187,12 @@ S3DirUploader <- R6::R6Class(
 
       end_time <- Sys.time()
       private$.time <- difftime(end_time, start_time, units = "secs")
+      private$.acl <- private$set_acl()
 
       private$.results <- results_ls
+      print
       private$.failed <- Filter(\(x) isFALSE(x$success), results_ls)
-      private$.acl <- private$set_acl()
+      private$.complete <- length(private$.failed) == 0
       return(results_ls)
     },
     #' @description
@@ -207,7 +208,7 @@ S3DirUploader <- R6::R6Class(
     #' Requires the 'future' and 'future.apply' packages to be installed.
     upload_files_parallel = \(
       n_cores = 4,
-      type = c("multicore", "multisession")
+      type = c("multisession", "multicore")
     ) {
       if (
         !requireNamespace("future", quietly = TRUE) ||
@@ -217,7 +218,8 @@ S3DirUploader <- R6::R6Class(
           "Packages 'future' and 'future.apply' must be installed for parallel uploading."
         )
       }
-      valid_s3 <- self$validate_con
+      future.seed <- TRUE # fix the generated random numbers warning
+      valid_s3 <- self$validate_con()
       if (!valid_s3) {
         stop("S3 connection not valid")
       }
@@ -225,13 +227,12 @@ S3DirUploader <- R6::R6Class(
       start_time <- Sys.time()
 
       s3_paths <- sprintf(
-        "s3://%s/%s/%s",
-        self$bucket,
+        "%s/%s",
         self$s3_dir,
         private$.name_fn(private$.files)
       )
       future::plan(strategy = type, workers = n_cores)
-      results_ls <- future.apply::future_lapply(seq_along(x), \(i) {
+      results_ls <- future.apply::future_lapply(seq_along(s3_paths), \(i) {
         s3_upload(
           local_path = private$.files[i],
           s3_key = s3_paths[i],
@@ -247,13 +248,39 @@ S3DirUploader <- R6::R6Class(
       private$.results <- results_ls
       private$.failed <- Filter(\(x) isFALSE(x$success), results_ls)
       private$.acl <- private$set_acl()
+      private$.complete <- length(private$.failed) == 0
       return(results_ls)
+    },
+    #' @description
+    #' Save a report of the upload results.
+    save_report = \(path = NULL) {
+      report_ls <- list(
+        id = self$upload_id,
+        bucket = self$bucket,
+        public = self$public,
+        local_dir = private$.local_dir,
+        s3_dir = self$s3_dir,
+        access = private$.acl,
+        upload_date = private$.date,
+        n_files = length(private$.files),
+        completed = private$.complete,
+        failed = private$.failed,
+        time = format(private$.time) # convert to char as it is a difftime & doesn't parse
+      )
+      jsonlite::write_json(
+        report_ls,
+        path %||%
+          paste0(self$local_dir, "/", self$upload_id, "upload_report.json"),
+        pretty = TRUE,
+        auto_unbox = TRUE
+      )
     }
   ),
   private = list(
     .files = NULL,
     .n_files = NULL,
     .failed = NULL,
+    .results = NULL,
     .complete = FALSE,
     .time = NULL,
     .date = format(Sys.Date()),
@@ -267,7 +294,7 @@ S3DirUploader <- R6::R6Class(
         tryCatch(
           {
             set_uri_public(
-              s3_uri = self$s3_dir,
+              s3_uri = sprintf("s3://%s/%s", self$bucket, self$s3_dir),
               self$bucket,
               directory = TRUE,
               s3_inst = private$s3_inst
@@ -381,7 +408,7 @@ S3DirUploader <- R6::R6Class(
 #   bucket = "my-bucket",
 #   s3_dir = "test"
 # )
-#
+# #
 # t$dry_run(10)
 # t$pattern_ft <- ".tif$|.parquet$"
 # t$dry_run(10)
