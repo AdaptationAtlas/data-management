@@ -36,9 +36,9 @@ pub struct RasterStats {
 }
 impl RasterStats {
     /// Pretty print a single RasterStats to stdout
-    pub fn print(&self) {
-        println!("{}", self.format_pretty());
-    }
+    // pub fn print(&self) {
+    //     println!("{}", self.format_pretty());
+    // }
 
     /// Format a single RasterStats as a pretty string
     pub fn format_pretty(&self) -> String {
@@ -63,7 +63,7 @@ impl RasterStats {
 
         output.push_str(&format!("└─ Data Info:\n"));
         output.push_str(&format!(
-            "   • Valid:    {:>12} ({:>6.1}%)\n",
+            "   • Valid:    {:>12} ({:>5.1}%)\n",
             self.valid_count, self.percent_valid
         ));
         output.push_str(&format!("   • NoData:   {:>12}\n", self.nodata_count));
@@ -388,7 +388,7 @@ pub fn batch_qaqc(
                 "Processing file {}/{}: {:?}",
                 current,
                 total,
-                path.file_name()
+                path.file_name()?
             );
             match compute_all_bands(path, quantiles) {
                 Ok(df) => Some(raster_stats_to_df(df, path)),
@@ -403,20 +403,22 @@ pub fn batch_qaqc(
         .collect()
         .unwrap();
 
-    let mut file = File::create(directory.join("qaqc.parquet")).unwrap();
+    let ext = match output_format {
+        OutputFormat::Csv => "csv",
+        OutputFormat::Parquet => "parquet",
+    };
+
+    let path = directory.join(format!("qaqc.{}", ext));
+    let mut file = File::create(&path)?;
 
     match output_format {
-        OutputFormat::Csv => {
-            CsvWriter::new(&mut file).finish(&mut result)?;
-        }
+        OutputFormat::Csv => CsvWriter::new(&mut file).finish(&mut result)?,
         OutputFormat::Parquet => {
-            ParquetWriter::new(&mut file).finish(&mut result)?;
+            let _ = ParquetWriter::new(&mut file).finish(&mut result)?; // _ bc pq writer returns size & csv doesn't
         }
     }
-    println!(
-        "Wrote output to: {}",
-        directory.join("qaqc.parquet").to_str().unwrap()
-    );
+
+    println!("Wrote output to: {}", path.display());
 
     Ok(())
 }

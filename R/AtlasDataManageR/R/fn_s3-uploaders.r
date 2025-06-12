@@ -10,7 +10,7 @@
 #' @return list. A list of upload details and result.
 #' @export
 s3_upload <- function(local_path, s3_key, s3, bucket, max_tries = 3) {
-  if (!file.exists(local_path)) stop("File not found: ", local_path)
+  if (!file.exists(local_path)) stop(paste0("File not found: ", local_path))
   file_size <- file.info(local_path)$size
   for (i in seq_len(max_tries)) {
     success <- tryCatch(
@@ -18,22 +18,21 @@ s3_upload <- function(local_path, s3_key, s3, bucket, max_tries = 3) {
         if (file_size > 5 * 2^20) {
           s3_multipart(local_path, s3_key, s3, bucket, 5)
         } else {
-          con <- file(local_path, "rb")
-          on.exit(close(con))
           s3$put_object(
-            Body = con,
+            Body = local_path,
             Bucket = bucket,
             Key = s3_key
           )
         }
+        TRUE
       },
       error = function(e) {
+        message("Upload attempt failed: ", conditionMessage(e))
         FALSE
       }
     )
     if (success) {
-      return(TRUE)
-      break
+      return(list(local = local_path, s3 = s3_key, success = TRUE))
     }
   }
   return(list(local = local_path, s3 = s3_key, success = success))

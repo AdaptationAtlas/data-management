@@ -42,13 +42,17 @@ enum Commands {
         out: Option<PathBuf>,
     },
 
-    /// Get stats for QAQC for a GeoTIFF
+    /// Get useful stats and QAQC metrics for a GeoTIFF
     RunQAQC {
+        /// Path to GeoTIFF
         path: PathBuf,
+        /// Calculate quantiles? Takes more time and memory.
         #[arg(short, long, default_value_t = false)]
         quantiles: bool,
+        /// Percentage of files to check in a directory
         #[arg(short, long, default_value_t = 100)]
         pct_check: u8,
+        /// Output directory QAQC results as CSV or Parquet
         #[arg(short, long, default_value_t = OutputFormat::Csv)]
         output_format: OutputFormat,
     },
