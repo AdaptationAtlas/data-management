@@ -268,6 +268,7 @@ S3DirUploader <- R6::R6Class(
     #'
     #' @param path character. Path to save the report. Default is in the local directory.
     save_report = \(path = NULL) {
+      n_examples <- min(length(private$.files), 10)
       report_ls <- list(
         id = self$upload_id,
         bucket = self$bucket,
@@ -282,7 +283,7 @@ S3DirUploader <- R6::R6Class(
         time = format(private$.time), # convert to char as it is a difftime & doesn't parse
         file_pattern = private$.pattern_ft,
         filter = deparse1(private$.filter_fn),
-        example_uri = self$dry_run(x = 10)
+        example_uri = self$dry_run(x = n_examples)
       )
       save_path <- path %||%
         paste0(self$local_dir, "/", self$upload_id, "_uploadReport.json")
