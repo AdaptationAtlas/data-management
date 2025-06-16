@@ -49,6 +49,8 @@ Initialize S3DirUploader}
 \item{\code{pattern_ft}}{character. The pattern to select which files/types to upload.}
 
 \item{\code{name_fn}}{function. Name transformation function.}
+
+\item{\code{filter_fn}}{function or NULL. Function to further filter files for upload (default: NULL).}
 }
 \if{html}{\out{</div>}}
 }
@@ -62,6 +64,7 @@ Initialize S3DirUploader}
 \item \href{#method-S3_uploader-validate_con}{\code{S3DirUploader$validate_con()}}
 \item \href{#method-S3_uploader-upload_files}{\code{S3DirUploader$upload_files()}}
 \item \href{#method-S3_uploader-upload_files_parallel}{\code{S3DirUploader$upload_files_parallel()}}
+\item \href{#method-S3_uploader-save_report}{\code{S3DirUploader$save_report()}}
 \item \href{#method-S3_uploader-clone}{\code{S3DirUploader$clone()}}
 }
 }
@@ -76,7 +79,8 @@ Creates a new S3DirUploader instance of \link[R6:R6Class]{R6} class.
   local_dir,
   bucket,
   s3_dir,
-  pattern_ft = NULL,
+  file_pattern = NULL,
+  filter_fn = NULL,
   name_fn = NULL,
   s3_inst = NULL,
   public = FALSE,
@@ -95,7 +99,9 @@ Creates a new S3DirUploader instance of \link[R6:R6Class]{R6} class.
 
 \item{\code{s3_dir}}{character. S3 directory path to upload to.}
 
-\item{\code{pattern_ft}}{character or NULL. Regex pattern to filter files (default: NULL).}
+\item{\code{file_pattern}}{character or NULL. Regex pattern passed to list.files() (default: NULL).}
+
+\item{\code{filter_fn}}{function or NULL. Function to further filter files for upload (default: NULL).}
 
 \item{\code{name_fn}}{function or NULL. Function to transform file names for S3 keys (default: NULL).}
 
@@ -189,7 +195,7 @@ with large numbers of files.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{S3DirUploader$upload_files_parallel(
   n_cores = 4,
-  type = c("multicore", "multisession")
+  type = c("multisession", "multicore")
 )}\if{html}{\out{</div>}}
 }
 
@@ -204,6 +210,23 @@ with large numbers of files.
 }
 \subsection{Returns}{
 List of upload results for each file.
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-S3_uploader-save_report"></a>}}
+\if{latex}{\out{\hypertarget{method-S3_uploader-save_report}{}}}
+\subsection{Method \code{save_report()}}{
+Save a report of the upload results.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{S3DirUploader$save_report(path = NULL)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{path}}{character. Path to save the report.}
+}
+\if{html}{\out{</div>}}
 }
 }
 \if{html}{\out{<hr>}}
