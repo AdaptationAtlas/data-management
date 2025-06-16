@@ -251,7 +251,7 @@ S3DirUploader <- R6::R6Class(
             max_tries = 3
           )
         },
-        future.seed <- TRUE # fix the generated random numbers warning
+        future.seed = TRUE # fix the generated random numbers warning
       )
       future::plan("sequential")
 
@@ -266,7 +266,7 @@ S3DirUploader <- R6::R6Class(
     #' @description
     #' Save a report of the upload results.
     #'
-    #' @param path character. Path to save the report.
+    #' @param path character. Path to save the report. Default is in the local directory.
     save_report = \(path = NULL) {
       report_ls <- list(
         id = self$upload_id,
@@ -281,10 +281,11 @@ S3DirUploader <- R6::R6Class(
         failed = private$.failed,
         time = format(private$.time), # convert to char as it is a difftime & doesn't parse
         file_pattern = private$.pattern_ft,
-        filter = deparse1(private$.filter_fn)
+        filter = deparse1(private$.filter_fn),
+        example_uri = self$dry_run(x = 10)
       )
       save_path <- path %||%
-        paste0(self$local_dir, "/", self$upload_id, "upload_report.json")
+        paste0(self$local_dir, "/", self$upload_id, "_uploadReport.json")
       jsonlite::write_json(
         report_ls,
         save_path,
