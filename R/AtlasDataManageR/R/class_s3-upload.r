@@ -48,7 +48,8 @@ S3DirUploader <- R6::R6Class(
     #' @param local_dir character. Path to the local directory to upload.
     #' @param bucket character. Name of the target S3 bucket.
     #' @param s3_dir character. S3 directory path to upload to.
-    #' @param pattern_ft character or NULL. Regex pattern to filter files (default: NULL).
+    #' @param file_pattern character or NULL. Regex pattern passed to list.files() (default: NULL).
+    #' @param filter_fn function or NULL. Function to further filter files for upload (default: NULL).
     #' @param name_fn function or NULL. Function to transform file names for S3 keys (default: NULL).
     #' @param s3_inst [paws.storage][paws.storage::s3] or NULL.
     #' An S3 client instance or if NULL one will be created (default: NULL).
@@ -61,7 +62,8 @@ S3DirUploader <- R6::R6Class(
       local_dir,
       bucket,
       s3_dir,
-      pattern_ft = NULL,
+      file_pattern = NULL,
+      filter_fn = NULL,
       name_fn = NULL,
       s3_inst = NULL,
       public = FALSE,
@@ -75,8 +77,11 @@ S3DirUploader <- R6::R6Class(
         "`local_dir` is required to be an existing directory path" = (
           dir.exists(local_dir) && length(local_dir) == 1
         ),
-        "`pattern_ft` is required to be NULL or a single character string" = (
-          is.null(pattern_ft) || (is.character(pattern_ft) && length(pattern_ft) == 1)
+        "`pattern` is required to be NULL or a single character string" = (
+          is.null(file_pattern) || (is.character(file_pattern) && length(file_pattern) == 1)
+        ),
+        "`filter_fn` is required to be NULL or a function" = (
+          is.null(filter_fn) || is.function(filter_fn)
         ),
         "`name_fn` is required to be NULL or a function" = (
           is.null(name_fn) || is.function(name_fn)
@@ -94,13 +99,16 @@ S3DirUploader <- R6::R6Class(
 
       private$s3_inst <- s3_inst %||% paws.storage::s3()
       private$.local_dir <- local_dir
-      private$.pattern_ft <- pattern_ft
+      private$.pattern_ft <- file_pattern
+      filter_fn <- filter_fn %||% identity # placeholder fn to return value if null
+      private$.filter_fn <- filter_fn
       private$.files <- list.files(
         local_dir,
-        pattern = pattern_ft,
+        pattern = file_pattern,
         full.names = TRUE,
         recursive = recursive
-      )
+      ) |>
+        filter_fn()
       private$.name_fn <- name_fn %||% \(x) basename(x)
       self$s3_dir <- s3_dir
       self$bucket <- bucket
@@ -122,6 +130,7 @@ S3DirUploader <- R6::R6Class(
       cat("  Complete:    ", private$.complete, "\n")
       cat("  Failed:      ", length(private$.failed), " files\n")
       cat("  S3 ACL:      ", private$.acl, "\n")
+      cat("  File Pattern: ", private$.pattern_ft, "\n")
       invisible(self)
     },
     #' @description
@@ -218,7 +227,6 @@ S3DirUploader <- R6::R6Class(
           "Packages 'future' and 'future.apply' must be installed for parallel uploading."
         )
       }
-      future.seed <- TRUE # fix the generated random numbers warning
       valid_s3 <- self$validate_con()
       if (!valid_s3) {
         stop("S3 connection not valid")
@@ -232,15 +240,19 @@ S3DirUploader <- R6::R6Class(
         private$.name_fn(private$.files)
       )
       future::plan(strategy = type, workers = n_cores)
-      results_ls <- future.apply::future_lapply(seq_along(s3_paths), \(i) {
-        s3_upload(
-          local_path = private$.files[i],
-          s3_key = s3_paths[i],
-          private$s3_inst,
-          self$bucket,
-          max_tries = 3
-        )
-      })
+      results_ls <- future.apply::future_lapply(
+        seq_along(s3_paths),
+        \(i) {
+          s3_upload(
+            local_path = private$.files[i],
+            s3_key = s3_paths[i],
+            private$s3_inst,
+            self$bucket,
+            max_tries = 3
+          )
+        },
+        future.seed <- TRUE # fix the generated random numbers warning
+      )
       future::plan("sequential")
 
       end_time <- Sys.time()
@@ -253,6 +265,8 @@ S3DirUploader <- R6::R6Class(
     },
     #' @description
     #' Save a report of the upload results.
+    #'
+    #' @param path character. Path to save the report.
     save_report = \(path = NULL) {
       report_ls <- list(
         id = self$upload_id,
@@ -265,15 +279,19 @@ S3DirUploader <- R6::R6Class(
         n_files = length(private$.files),
         completed = private$.complete,
         failed = private$.failed,
-        time = format(private$.time) # convert to char as it is a difftime & doesn't parse
+        time = format(private$.time), # convert to char as it is a difftime & doesn't parse
+        file_pattern = private$.pattern_ft,
+        filter = deparse1(private$.filter_fn)
       )
+      save_path <- path %||%
+        paste0(self$local_dir, "/", self$upload_id, "upload_report.json")
       jsonlite::write_json(
         report_ls,
-        path %||%
-          paste0(self$local_dir, "/", self$upload_id, "upload_report.json"),
+        save_path,
         pretty = TRUE,
         auto_unbox = TRUE
       )
+      print(sprintf("Report saved to: %s", save_path))
     }
   ),
   private = list(
@@ -287,6 +305,7 @@ S3DirUploader <- R6::R6Class(
     .local_dir = NULL,
     .pattern_ft = NULL,
     .name_fn = NULL,
+    .filter_fn = NULL,
     s3_inst = NULL,
     .acl = NULL,
     set_acl = \() {
@@ -379,7 +398,8 @@ S3DirUploader <- R6::R6Class(
             pattern = x,
             full.names = TRUE,
             recursive = self$recursive
-          )
+          ) |>
+            private$.filter_fn()
         }
       }
     },
@@ -396,6 +416,22 @@ S3DirUploader <- R6::R6Class(
       } else {
         stopifnot(is.function(x))
         private$.name_fn <- x
+      }
+    },
+    #' @field filter_fn function or NULL. Function to further filter files for upload (default: NULL).
+    filter_fn = \(x) {
+      if (missing(x)) {
+        private$.filter_fn
+      } else {
+        stopifnot(is.function(x) || is.null(x))
+        private$.filter_fn <- x
+        private$.files <- list.files(
+          private$.local_dir,
+          pattern = x,
+          full.names = TRUE,
+          recursive = self$recursive
+        ) |>
+          private$.filter_fn()
       }
     }
   )
