@@ -425,7 +425,7 @@ pub fn batch_qaqc(
 
 pub fn single_qaqc(path: &Path, quantiles: bool) -> Result<()> {
     let stats = compute_all_bands(path, quantiles)?;
-    println!("{:#?}", stats);
+    // println!("{:#?}", stats);
     print_all_bands(&stats);
     Ok(())
 }
