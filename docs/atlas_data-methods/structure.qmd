@@ -1,0 +1,42 @@
+# The Atlas Structure & Philosophy
+
+## The Atlas Philosophy
+The Africa Agriculture Adaptation Atlas exists to strengthen adaptation programming across Africa through data-driven decision-making. Our goal is to create scientifically robust, data-rich insights that inform policies, guide investments, and support the design of effective adaptation programs.
+
+At the heart of the Atlas are a series of interactive, open notebooks—designed to deliver answers for a specific topic quickly. These aim to be be user-friendly, scalable, and modular. We use a story-based approach, ensuring that each notebook delivers direct, specific insights tailored to users’ needs as quickly and clearly as possible.
+
+Our design principles are:
+
+**Community** – Build using tools that are familiar to technical scientists and researchers, lowering barriers and enabling data sharing and collaboration without requiring traditional web-development skills.
+
+**Modularity** – Components are reusable, adaptable, and easy to combine into new data stories quickly and easily.
+
+**Openness** – Anyone can contribute their datasets, methods, or narratives, making it easier to surface local and specialized knowledge. We use open-source tools and all of our code and data is openly available for anyone to build from, contribute to, and re-use.
+
+**Reusable** – The same methods and workflows can be applied across different regions, themes, or datasets without starting from scratch.
+
+**Sustainability** - The Atlas is designed to last for years to come. It uses tools which can easily be hosted on institutional servers, free hosting platforms (GitHub Pages, Observable HQ), and does not require expensive infrastructure or developers to maintain.
+
+By combining flexible technology with a collaborative ethos, the Atlas makes it simpler for policymakers, researchers, and practitioners to see the data behind the decisions—and to adapt faster, together.
+
+## The Tech Stack
+![Atlas Structure](./AtlasTechStack.svg)
+
+### The Landing Page & Main Site
+The [Adaptation Atlas landing page](https://adaptationatlas.cgiar.org/) is built with Next.js and TypeScript, using Sanity as a content management system (CMS) to manage and deliver content on the page. The application is hosted on our local Alliance servers and deployed as a Docker container for a streamlined, portable setup. The source code and Docker image can be used to replicate the system and can be found [here](https://github.com/AdaptationAtlas/website_adaptation-atlas-v2) along with documentation on how to set it up.
+
+[!NOTE] This is just the main website for the Adaptation Atlas. The notebooks (discussed in the next section), are completely standalone and are only linked to from this site.
+
+### The Atlas Notebooks (Data Explorations)
+The Atlas notebooks are fully modular, standalone, and self-contained, capable of running as static websites with no backend required. Built in Observable JavaScript (OJS), they use DuckDB WASM to query data directly from our S3 bucket efficiently based on user inputs. This allows all code and data processing to happen client-side, minimizing hosting costs and promoting sustainability, scalability, and development ease. Users can open, copy, modify, or import notebooks or notebook sections easily, enabling rapid creation of new analyses or data stories. Currently hosted on ObservableHQ, the notebooks are being migrated to the [Atlas Notebook GitHub repository](https://github.com/AdaptationAtlas/atlas_notebooks) to further support reuse, collaboration, and improved management of issues and suggestions.
+
+### The Atlas GitHub
+The code used to create and analyze most Atlas datasets is openly available on our [Atlas GitHub](https://github.com/AdaptationAtlas), ensuring transparent, reproducible, and open science principles. The repository also includes tools developed for the Atlas, designed to streamline the creation of notebooks and Quarto documents, as well as to simplify [cloud data management and format conversion](https://github.com/AdaptationAtlas/data-management/tree/main/rust/cloud-convert). These resources make it easier for others to replicate our workflows, adapt them to new contexts, and contribute back to the growing Atlas ecosystem.
+
+### The Atlas S3
+All Atlas datasets are stored in cloud-native formats—including Parquet, GeoParquet, and Cloud-Optimized GeoTIFFs (COGs) within an AWS S3 bucket. These formats are designed for efficiency, allowing tools like Apache Arrow, DuckDB, and GDAL to query and access only the data needed by the user, rather than downloading entire files. This approach dramatically reduces transfer times and computing costs, while enabling scalable, on-demand analysis directly from cloud storage. It also ensures our data remains open, interoperable, and ready to integrate into modern data workflows.
+
+### The Atlas STAC
+All [Atlas data](https://stacindex.org/catalogs/africa-agriculture-adaptation-atlas#/) is cataloged using [STAC](https://stacspec.org) (SpatioTemporal Asset Catalog), an open standard for describing geospatial data. STAC ensures every dataset is paired with rich, standardized metadata, making it easier to discover, search, and integrate data across projects. By adopting this community standard, we align with global best practices, enabling compatibility with a wide range of tools and platforms. STAC also supports filtering by time, space, and other properties, making it simple for scientists, policymakers, and developers to find exactly the data they need while ensuring long-term interoperability and re-usability.
+
+

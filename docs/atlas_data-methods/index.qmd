@@ -1,0 +1,11 @@
+# Preface {.unnumbered}
+
+This is a Quarto book designed to document many of the methods, decisions and data sets we have used in the Adaptation Atlas. 
+
+The Atlas is implemented by a consortium of CGIAR centers and partners, led by the Alliance of Bioversity International and CIAT and in collaboration with International Food Policy Research Institute (IFPRI), the Better Planet Laboratory at the University of Colorado, Boulder and previously the CGIAR Big Data Platform. CGIAR Initiatives including Excellence in Agronomy (EiA) and Livestock and Climate (L&C) as well as programs such as Accelerating Impacts of CGIAR Climate Research for Africa (AICCRA) have contributed data and collaborated on stories to this 3rd evolution of the concept. We are grateful to the Gates Foundation for their support of this project.
+
+[Visit the Atlas](https://adaptationatlas.cgiar.org/)
+
+This version of the Atlas has been led and developed with contributions from a wide rage of individuals and organizations. This includes, but is not limited to: Todd Rosenstock, Pete Steward, Julian Ramirez-Villegas, Brayden Youngberg, Shalika Vyas, Ulrike Wood-Sichra, Zia Mehrabi, Philip Thornton, Harold Achicanoy, and many others.
+
+We are grateful for their contributions and hope that you find these notebooks useful in your work. Let us know if you have any questions or suggestions.

@@ -1,0 +1,92 @@
+# Cloud Native data & Atlas data structure
+
+The Adaptation Atlas leverages modern cloud-native data formats such as Cloud
+Optimized GeoTIFF (COGs), Parquet, and GeoParquet. These open, community-driven
+standards require no proprietary software or drivers, ensuring data is fully
+reproducible, easy to share, and accessible for years to come. These formats are
+designed to be incredibly efficient and scalable, making use of modern
+technologies such as cloud storage, distributed and parallel processing, partial
+reads, and modern compression algorithms. This means the atlas can handle and
+surface terabytes of geospatial data while providing users with the ability to
+access the specific rows, columns, or geographic regions needed for a task. The
+result is **faster analysis, lower data transfer costs, and integration into
+client-side visualizations and large-scale analytical pipelines.** By adopting
+these formats, the Atlas remains interoperable with a broad ecosystem of tools,
+supporting both immediate decision-making and long-term open science.
+
+Although cloud-native is in the name, these formats do not require hosting on
+cloud storage or working with massive datasets to deliver benefits. Their
+efficiency applies equally to data stored locally, on internal servers, or at
+any scale. Even small and local datasets gain from faster reads, lower storage
+needs, and easier interoperability. An excellent introduction to cloud-native
+geospatial formats can be found [here](https://guide.cloudnativegeo.org/).
+
+## Parquet & GeoParquet
+
+The Adaptation Atlas uses [Parquet](https://github.com/apache/parquet-format) as
+the final data storage step between our raster analysis pipelines and the
+datasets we surface to users through the adaptation Atlas Interface. These
+datasets are often our raster data that has been aggregated to boundaries
+(watersheds or administrative) and formatted as tabular data.
+
+[GeoParquet](https://geoparquet.org/), which is based on Parquet, is used for
+all of the geospatial vector data used in the Adaptation Atlas, such as
+administrative boundaries, watersheds, etc. We aim to follow the
+[GeoParquet](https://github.com/opengeospatial/geoparquet/blob/main/format-specs/distributing-geoparquet.md)
+best practices as closely as possible. This ensures maximum interoperability
+between datasets and tools.
+
+These Parquet and GeoParquet datasets enable efficient filtering by geometry,
+columns, and row attributes, for use in both in analytical workflows and
+directly within Atlas notebooks in the browser using tools like DuckDB-WASM and
+other client-side, browser-based processing tools. This allows increased
+performance and allows the Atlas to surface much larger datasets to users than
+would otherwise be possible using older formats such as CSV or GeoJSON while
+maintaining smaller file sizes and faster transfer times.
+
+### Merging our Tabular Data with our Geospatial Boundaries
+
+To avoid duplicating large boundary datasets, most of our tabular data is stored
+without geometry columns. For visualization and spatial analysis, these tables
+should be joined to the corresponding boundary datasets. All tabular data
+aggregated to our GAUL administrative boundaries includes the fields
+admin0_name, admin1_name, admin2_name, ISO3c, and GAUL0_code, which align with
+the same columns in our boundary datasets and should be used for merging.
+
+Where admin1_name and admin2_name are NULL, the record represents country-level
+data. Where admin0_name and admin1_name are not NULL but admin2_name is NULL,
+the record represents administrative level 1. Where none of the admin name
+columns are NULL, the record represents administrative level 2.
+
+## Cloud Optimized GeoTiff (COG)
+
+The Adaptation Atlas uses [Cloud-Optimized GeoTIFFs (COGs)](https://cogeo.org/)
+to store raster data, allowing fast spatial queries and selective reading of
+only the tiles needed for analysis. Overviews in COGs also support efficient
+browsing and visualization when needed. Users of the Atlas may want to access
+and re-run analysis using our raw and processed raster data instead of the
+aggregated tabular data we provide through the Notebooks. By using COGs, users
+can access only the portions of raster data required for their analysis, such as
+specific layers or geographic regions, without downloading the full dataset.
+This reduces data transfer time and costs, while enabling analyses that would
+otherwise be impractical to individual users due to dataset size or memory and
+processing limitations.
+
+## Other Formats
+
+While the Atlas primarily uses COG, Parquet, and GeoParquet, we are following
+the development and use of other cloud-native formats such as Zarr and
+FlatGeobuf. As our data ecosystem continues to grow and our needs evolve, we
+plan to adopt these and other technologies where they can further enhance the
+Atlas' data capabilities.
+
+## STAC
+
+The Adaptation Atlas uses STAC (SpatioTemporal Asset Catalog), a widely adopted
+community standard for data and metadata management, to index and describe our
+datasets. STAC makes our cloud-optimized data easily discoverable and
+accessible, enabling efficient searching, filtering, and integration of raster
+and vector datasets across the Atlas for analysis workflows and browser-based
+data exploration.
+
+<!-- TODO: add in some benchmarks -->
