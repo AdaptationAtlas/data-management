@@ -4,7 +4,7 @@ import { walk } from "https://deno.land/std@0.224.0/fs/walk.ts";
 import { extname } from "https://deno.land/std@0.224.0/path/extname.ts";
 import { minify as minifyHtml } from "npm:html-minifier-terser@7.2.0";
 
-const SITE_DIR = "_site";
+const SITE_DIR = "_book";
 const CONCURRENCY = 5;
 const loaders = { ".js": "js", ".css": "css" } as const;
 
@@ -92,4 +92,3 @@ async function main() {
 }
 
 await main();
-
