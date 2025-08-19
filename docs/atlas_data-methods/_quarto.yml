@@ -1,0 +1,31 @@
+project:
+  type: book
+
+book:
+  title: "Atlas Data & Methods"
+  author: "Brayden Youngberg"
+  date: "8/6/2025"
+  chapters:
+    - index.qmd
+    - intro.qmd
+    - structure.qmd
+    - cloud-native.qmd
+    - boundaries.qmd
+    - hazards.qmd
+    - exposure.qmd
+    - glossary.qmd
+    - faq.qmd
+    # - references.qmd
+
+bibliography: references.bib
+
+format:
+  html:
+    theme:
+      light: cosmo
+      dark: darkly
+    grid:
+      body-width: 1100px
+
+  pdf:
+    documentclass: scrreprt
