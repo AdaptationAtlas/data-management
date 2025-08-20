@@ -1,4 +1,4 @@
-# Boundary Datasets
+# Boundary Datasets {#sec-boundaries}
 
 ## Administrative Boundaries
 
