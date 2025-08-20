@@ -1,0 +1,87 @@
+# Phenology
+
+This dataset provides subnational estimates of key seasonal metrics for crop and
+vegetation systems, derived from remote sensing and climate data. It captures
+temporal patterns in vegetation growth to support agricultural planning and
+climate risk assessment.
+
+## Start of Season (SOS) and End of Season (EOS)
+
+This dataset provides subnational estimates of seasonal timing derived from
+GLASS 8-day NDVI data using the
+[Phenofit framework](https://besjournals.onlinelibrary.wiley.com/doi/full/10.1111/2041-210X.13870)
+and R package. ahhhh
+
+### Dataset Overview
+
+Start-of-season (SOS) and end-of-season (EOS) are derived primarily from the
+**DER method** (maximum positive/negative derivative) and threshold-based
+approaches (**TRS2**: 20% seasonal amplitude, **TRS5**: 50% seasonal amplitude).
+These are the most robust indicators of green-up and senescence, while other
+metrics such as logistic inflection points (UD, SD, DD, RD, Greenup, Maturity,
+Senescence, Dormancy) are less reliable in regions with multiple or noisy
+growing seasons. Users are advised to rely on DER values for seasonal analysis
+and timing, but TRS2 and TRS5 may also be useful.
+
+### Format
+
+All SOS and EOS data are stored in Parquet format, with one file per country.
+The definitions for the columns are shown below.
+
+#### Column definitions
+
+| Variable    | Description                                                             | Unit    |
+| ----------- | ----------------------------------------------------------------------- | ------- |
+| DER.sos     | Start-of-season: date of maximum positive derivative (fastest green-up) | Date    |
+| TRS2.sos    | Start-of-season: date when curve crosses 20% of seasonal amplitude      | Date    |
+| TRS5.sos    | Start-of-season: date when curve crosses 50% of seasonal amplitude      | Date    |
+| DER.eos     | End-of-season: date of maximum negative derivative (fastest senescence) | Date    |
+| TRS2.eos    | End-of-season: date when curve falls below 20% of seasonal amplitude    | Date    |
+| TRS5.eos    | End-of-season: date when curve falls below 50% of seasonal amplitude    | Date    |
+| meth        | Curve-fitting method selected as 'best'                                 | Text    |
+| R2          | Coefficient of determination for selected model                         | Numeric |
+| NSE         | Nash–Sutcliffe Efficiency                                               | Numeric |
+| RMSE        | Root-mean-square error of fit                                           | Numeric |
+| R           | Pearson correlation between fitted and observed NDVI                    | Numeric |
+| pvalue      | p-value of the correlation (R)                                          | Numeric |
+| pixel       | Raster cell index in original NDVI stack                                | Integer |
+| admin1_name | Name of admin1 region                                                   | Text    |
+| flag        | Flag to indicate year and season number (format: year_season#)          | Text    |
+
+## Seasonal Rainfall
+
+This dataset provides estimates of seasonal rainfall aligned with the start and
+end of the growing season (SOS/EOS) derived from phenology data. Rainfall is
+based on **CHIRPS v3** and is currently only processed for Kenya. It captures
+the total precipitation occurring within each identified season, allowing
+assessment of seasonal water availability for agriculture and climate risk
+analysis.
+
+Rainfall metrics are computed using the same seasonal delineation as the
+phenology dataset, and the recommended variable for robust seasonal analysis is
+**rain_der**. This use the DER method (maximum positive/negative derivative) for
+SOS/EOS to produce more stable season lengths. Other thresholds (**rain_trs2,
+rain_trs5, rain_greenup_senescence**) are also provided but are less robust.
+
+### Units Table
+
+| Variable                | Description                                                  | Unit |
+| ----------------------- | ------------------------------------------------------------ | ---- |
+| rain_der                | Rainfall total for the season based on DER SOS/EOS           | mm   |
+| rain_trs2               | Rainfall total for the season using 20% amplitude thresholds | mm   |
+| rain_trs5               | Rainfall total for the season using 50% amplitude thresholds | mm   |
+| rain_greenup_senescence | Rainfall between green-up and senescence phases              | mm   |
+
+### How to begin?
+
+To start using the phenology dataset, first identify the country or region of
+interest. Each country’s data is stored as a separate Parquet file, containing
+per-pixel seasonal metrics. For analysis at broader scales, it is recommended to
+**aggregate the data to administrative level 1 (ADM1)**, using the admin1_name
+column in the dataset. Filtering and subsetting can be done based on the
+provided quality statistics if needed (see below). Aggregation can be performed
+by computing the mean, median, max, min, and other summary statistics of SOS and
+EOS dates within each Admin 1 area. These admin 1 names match with the admin 1
+names in the @sec-boundaries admin boundaries dataset. This allows for easier
+comparison across regions and integration with other spatial datasets, such as
+crop or livestock VoP and population exposure.

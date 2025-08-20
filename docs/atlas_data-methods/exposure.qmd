@@ -1,7 +1,116 @@
 # Exposure Datasets
 
+In the context of climate risk, exposure refers to the presence of people,
+assets, ecosystems, or other systems that could be affected by climate hazards.
+Following IPCC definitions, exposure is about “what is in harm’s way” rather
+than the sensitivity or adaptive capacity of the system. It captures the spatial
+distribution and extent of assets or populations that may experience
+climate-related events, such as extreme rainfall, drought, or heatwaves, and is
+a key component in assessing potential climate impacts and risks.
+
 ## Crop
+
+This dataset provides subnational estimates of the Value of Production (VoP),
+crop production (kg/ha), and harvested area (ha) for major crops across
+Sub-Saharan Africa. It is based on a version of MapSpam adapted for the African
+Agricultural Adaptation Atlas using 2020 production numbers. VoP was calculated
+by combining national FAOSTAT production, price, and value data with SPAM
+gridded crop production rasters, disaggregated by farming system (subsistence,
+low, high, irrigated). National VoP is spatially allocated to raster surfaces to
+show where economic value is concentrated, producing outputs in nominal USD per
+pixel. These rasters highlight the distribution of crop production value across
+space and farming systems, supporting assessments of economic exposure to
+climate hazards and informing adaptation planning.
+
+### Units Table
+
+| Variable             | Description         | Unit                       |
+| -------------------- | ------------------- | -------------------------- |
+| harv-area_ha         | Harvested area      | hectares (ha)              |
+| phys-area_ha         | Physical production | tonnes (t)                 |
+| yield                | Yield per area      | kg/ha                      |
+| vop_nominal-usd-2021 | Value of Production | nominal USD 2021           |
+| vop_nominal-usd-2020 | Value of Production | nominal USD 2020           |
+| vop_nominal-usd-2015 | Value of Production | nominal USD 2015           |
+| vop_intld15          | Value of Production | international dollars 2015 |
 
 ## Livestock
 
+This dataset provides subnational estimates of the Value of Production (VoP) and
+population of key livestock species (cattle, goats, sheep, pigs, and poultry)
+across Sub-Saharan Africa. VoP was calculated by combining gridded livestock
+population data (GLW4) with national-level FAOSTAT production, price, and value
+data, adjusted using World Bank exchange rates and purchasing power parity (PPP)
+statistics. The national VoP is spatially distributed to raster surfaces
+according to livestock densities and further split between highland and tropical
+zones. Outputs include VoP rasters in both constant USD and international
+dollars, livestock counts per species, and derived indicators such as
+sheep-to-goat proportions, all aligned to the Atlas standard raster for
+compatibility with other datasets.
+
+### Livestock Units Table
+
+| Variable             | Description               | Unit                       |
+| -------------------- | ------------------------- | -------------------------- |
+| number_n             | Livestock count per pixel | head                       |
+| vop_intld15-2015     | Value of Production       | international dollars 2015 |
+| vop_intld15-2020     | Value of Production       | international dollars 2020 |
+| vop_intld15-2021     | Value of Production       | international dollars 2021 |
+| vop_nominal-usd-2015 | Value of Production       | nominal USD 2015           |
+| vop_nominal-usd-2020 | Value of Production       | nominal USD 2020           |
+| vop_nominal-usd-2021 | Value of Production       | nominal USD 2021           |
+
 ## Human Population
+
+This dataset provides subnational estimates of rural population across Africa.
+It is based on WorldPop 2020, with population divided into rural, urban, and
+total categories. Urban and rural areas are masked using the unconstrained
+global WorldPop mosaic, and African populations are further refined using
+Africapolis data.
+
+## Exposure Data Index and Paths
+
+```{r}
+#| echo: false
+library(s3fs)
+library(DT)
+s3 <- s3fs::S3FileSystem$new(anonymous = TRUE)
+
+exposure_data <- s3$dir_ls(
+  "digital-atlas/domain=exposure/",
+  recurse = T
+)
+
+split_paths <- strsplit(sub("^s3://digital-atlas/", "", exposure_data), "/")
+
+# Extract key=value pairs and filename
+df <- do.call(
+  rbind,
+  lapply(split_paths, function(parts) {
+    kv <- parts[grepl("=", parts)]
+    keys <- sapply(strsplit(kv, "="), `[`, 1)
+    values <- sapply(strsplit(kv, "="), `[`, 2)
+    res <- setNames(values, keys)
+    res["filename"] <- parts[length(parts)]
+    # Ensure all columns exist
+    all_cols <- c(
+      "domain",
+      "type",
+      "source",
+      "region",
+      "processing",
+      "time",
+      "variable",
+      "filename"
+    )
+    res[setdiff(all_cols, names(res))] <- NA
+    res[all_cols]
+  })
+)
+
+df <- as.data.frame(df, stringsAsFactors = FALSE)
+df$s3_path <- exposure_data
+
+# Drop first domain column as all domain = Boundaries
+datatable(df[-1], rownames = FALSE)
+```

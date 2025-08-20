@@ -15,6 +15,7 @@ book:
     - boundaries.qmd
     - hazards.qmd
     - exposure.qmd
+    - phenology.qmd
     - glossary.qmd
     - faq.qmd
     # - references.qmd
@@ -28,6 +29,6 @@ format:
       dark: darkly
     grid:
       body-width: 1100px
-
-  pdf:
-    documentclass: scrreprt
+  #
+  # pdf:
+  #   documentclass: scrreprt
