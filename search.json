@@ -134,7 +134,17 @@
     "href": "exposure.html",
     "title": "6  Exposure Datasets",
     "section": "",
-    "text": "6.1 Crop",
+    "text": "6.1 Crop\nIn the context of climate risk, exposure refers to the presence of people, assets, ecosystems, or other systems that could be affected by climate hazards. Following IPCC definitions, exposure is about “what is in harm’s way” rather than the sensitivity or adaptive capacity of the system. It captures the spatial distribution and extent of assets or populations that may experience climate-related events, such as extreme rainfall, drought, or heatwaves, and is a key component in assessing potential climate impacts and risks.\nThis dataset provides subnational estimates of the Value of Production (VoP), crop production (kg/ha), and harvested area (ha) for major crops across Sub-Saharan Africa. It is based on a version of MapSpam adapted for the African Agricultural Adaptation Atlas using 2020 production numbers. VoP was calculated by combining national FAOSTAT production, price, and value data with SPAM gridded crop production rasters, disaggregated by farming system (subsistence, low, high, irrigated). National VoP is spatially allocated to raster surfaces to show where economic value is concentrated, producing outputs in nominal USD per pixel. These rasters highlight the distribution of crop production value across space and farming systems, supporting assessments of economic exposure to climate hazards and informing adaptation planning.",
+    "crumbs": [
+      "<span class='chapter-number'>6</span>  <span class='chapter-title'>Exposure Datasets</span>"
+    ]
+  },
+  {
+    "objectID": "exposure.html#crop",
+    "href": "exposure.html#crop",
+    "title": "6  Exposure Datasets",
+    "section": "",
+    "text": "6.1.1 Units Table\n\n\n\n\n\n\n\n\nVariable\nDescription\nUnit\n\n\n\n\nharv-area_ha\nHarvested area\nhectares (ha)\n\n\nphys-area_ha\nPhysical production\ntonnes (t)\n\n\nyield\nYield per area\nkg/ha\n\n\nvop_nominal-usd-2021\nValue of Production\nnominal USD 2021\n\n\nvop_nominal-usd-2020\nValue of Production\nnominal USD 2020\n\n\nvop_nominal-usd-2015\nValue of Production\nnominal USD 2015\n\n\nvop_intld15\nValue of Production\ninternational dollars 2015",
     "crumbs": [
       "<span class='chapter-number'>6</span>  <span class='chapter-title'>Exposure Datasets</span>"
     ]
@@ -144,7 +154,7 @@
     "href": "exposure.html#livestock",
     "title": "6  Exposure Datasets",
     "section": "6.2 Livestock",
-    "text": "6.2 Livestock",
+    "text": "6.2 Livestock\nThis dataset provides subnational estimates of the Value of Production (VoP) and population of key livestock species (cattle, goats, sheep, pigs, and poultry) across Sub-Saharan Africa. VoP was calculated by combining gridded livestock population data (GLW4) with national-level FAOSTAT production, price, and value data, adjusted using World Bank exchange rates and purchasing power parity (PPP) statistics. The national VoP is spatially distributed to raster surfaces according to livestock densities and further split between highland and tropical zones. Outputs include VoP rasters in both constant USD and international dollars, livestock counts per species, and derived indicators such as sheep-to-goat proportions, all aligned to the Atlas standard raster for compatibility with other datasets.\n\n6.2.1 Livestock Units Table\n\n\n\n\n\n\n\n\nVariable\nDescription\nUnit\n\n\n\n\nnumber_n\nLivestock count per pixel\nhead\n\n\nvop_intld15-2015\nValue of Production\ninternational dollars 2015\n\n\nvop_intld15-2020\nValue of Production\ninternational dollars 2020\n\n\nvop_intld15-2021\nValue of Production\ninternational dollars 2021\n\n\nvop_nominal-usd-2015\nValue of Production\nnominal USD 2015\n\n\nvop_nominal-usd-2020\nValue of Production\nnominal USD 2020\n\n\nvop_nominal-usd-2021\nValue of Production\nnominal USD 2021",
     "crumbs": [
       "<span class='chapter-number'>6</span>  <span class='chapter-title'>Exposure Datasets</span>"
     ]
@@ -154,9 +164,59 @@
     "href": "exposure.html#human-population",
     "title": "6  Exposure Datasets",
     "section": "6.3 Human Population",
-    "text": "6.3 Human Population",
+    "text": "6.3 Human Population\nThis dataset provides subnational estimates of rural population across Africa. It is based on WorldPop 2020, with population divided into rural, urban, and total categories. Urban and rural areas are masked using the unconstrained global WorldPop mosaic, and African populations are further refined using Africapolis data.",
     "crumbs": [
       "<span class='chapter-number'>6</span>  <span class='chapter-title'>Exposure Datasets</span>"
+    ]
+  },
+  {
+    "objectID": "exposure.html#exposure-data-index-and-paths",
+    "href": "exposure.html#exposure-data-index-and-paths",
+    "title": "6  Exposure Datasets",
+    "section": "6.4 Exposure Data Index and Paths",
+    "text": "6.4 Exposure Data Index and Paths",
+    "crumbs": [
+      "<span class='chapter-number'>6</span>  <span class='chapter-title'>Exposure Datasets</span>"
+    ]
+  },
+  {
+    "objectID": "phenology.html",
+    "href": "phenology.html",
+    "title": "7  Phenology",
+    "section": "",
+    "text": "7.1 Start of Season (SOS) and End of Season (EOS)\nThis dataset provides subnational estimates of key seasonal metrics for crop and vegetation systems, derived from remote sensing and climate data. It captures temporal patterns in vegetation growth to support agricultural planning and climate risk assessment.\nThis dataset provides subnational estimates of seasonal timing derived from GLASS 8-day NDVI data using the Phenofit framework and R package. ahhhh",
+    "crumbs": [
+      "<span class='chapter-number'>7</span>  <span class='chapter-title'>Phenology</span>"
+    ]
+  },
+  {
+    "objectID": "phenology.html#start-of-season-sos-and-end-of-season-eos",
+    "href": "phenology.html#start-of-season-sos-and-end-of-season-eos",
+    "title": "7  Phenology",
+    "section": "",
+    "text": "7.1.1 Dataset Overview\nStart-of-season (SOS) and end-of-season (EOS) are derived primarily from the DER method (maximum positive/negative derivative) and threshold-based approaches (TRS2: 20% seasonal amplitude, TRS5: 50% seasonal amplitude). These are the most robust indicators of green-up and senescence, while other metrics such as logistic inflection points (UD, SD, DD, RD, Greenup, Maturity, Senescence, Dormancy) are less reliable in regions with multiple or noisy growing seasons. Users are advised to rely on DER values for seasonal analysis and timing, but TRS2 and TRS5 may also be useful.\n\n\n7.1.2 Format\nAll SOS and EOS data are stored in Parquet format, with one file per country. The definitions for the columns are shown below.\n\n7.1.2.1 Column definitions\n\n\n\n\n\n\n\n\nVariable\nDescription\nUnit\n\n\n\n\nDER.sos\nStart-of-season: date of maximum positive derivative (fastest green-up)\nDate\n\n\nTRS2.sos\nStart-of-season: date when curve crosses 20% of seasonal amplitude\nDate\n\n\nTRS5.sos\nStart-of-season: date when curve crosses 50% of seasonal amplitude\nDate\n\n\nDER.eos\nEnd-of-season: date of maximum negative derivative (fastest senescence)\nDate\n\n\nTRS2.eos\nEnd-of-season: date when curve falls below 20% of seasonal amplitude\nDate\n\n\nTRS5.eos\nEnd-of-season: date when curve falls below 50% of seasonal amplitude\nDate\n\n\nmeth\nCurve-fitting method selected as ‘best’\nText\n\n\nR2\nCoefficient of determination for selected model\nNumeric\n\n\nNSE\nNash–Sutcliffe Efficiency\nNumeric\n\n\nRMSE\nRoot-mean-square error of fit\nNumeric\n\n\nR\nPearson correlation between fitted and observed NDVI\nNumeric\n\n\npvalue\np-value of the correlation (R)\nNumeric\n\n\npixel\nRaster cell index in original NDVI stack\nInteger\n\n\nadmin1_name\nName of admin1 region\nText\n\n\nflag\nFlag to indicate year and season number (format: year_season#)\nText",
+    "crumbs": [
+      "<span class='chapter-number'>7</span>  <span class='chapter-title'>Phenology</span>"
+    ]
+  },
+  {
+    "objectID": "phenology.html#seasonal-rainfall",
+    "href": "phenology.html#seasonal-rainfall",
+    "title": "7  Phenology",
+    "section": "7.2 Seasonal Rainfall",
+    "text": "7.2 Seasonal Rainfall\nThis dataset provides estimates of seasonal rainfall aligned with the start and end of the growing season (SOS/EOS) derived from phenology data. Rainfall is based on CHIRPS v3 and is currently only processed for Kenya. It captures the total precipitation occurring within each identified season, allowing assessment of seasonal water availability for agriculture and climate risk analysis.\nRainfall metrics are computed using the same seasonal delineation as the phenology dataset, and the recommended variable for robust seasonal analysis is rain_der. This use the DER method (maximum positive/negative derivative) for SOS/EOS to produce more stable season lengths. Other thresholds (rain_trs2, rain_trs5, rain_greenup_senescence) are also provided but are less robust.\n\n7.2.1 Units Table\n\n\n\n\n\n\n\n\nVariable\nDescription\nUnit\n\n\n\n\nrain_der\nRainfall total for the season based on DER SOS/EOS\nmm\n\n\nrain_trs2\nRainfall total for the season using 20% amplitude thresholds\nmm\n\n\nrain_trs5\nRainfall total for the season using 50% amplitude thresholds\nmm\n\n\nrain_greenup_senescence\nRainfall between green-up and senescence phases\nmm\n\n\n\n\n\n7.2.2 How to begin?\nTo start using the phenology dataset, first identify the country or region of interest. Each country’s data is stored as a separate Parquet file, containing per-pixel seasonal metrics. For analysis at broader scales, it is recommended to aggregate the data to administrative level 1 (ADM1), using the admin1_name column in the dataset. Filtering and subsetting can be done based on the provided quality statistics if needed (see below). Aggregation can be performed by computing the mean, median, max, min, and other summary statistics of SOS and EOS dates within each Admin 1 area. These admin 1 names match with the admin 1 names in the Chapter 4 admin boundaries dataset. This allows for easier comparison across regions and integration with other spatial datasets, such as crop or livestock VoP and population exposure.",
+    "crumbs": [
+      "<span class='chapter-number'>7</span>  <span class='chapter-title'>Phenology</span>"
+    ]
+  },
+  {
+    "objectID": "phenology.html#data-availability-table",
+    "href": "phenology.html#data-availability-table",
+    "title": "7  Phenology",
+    "section": "7.3 Data availability table",
+    "text": "7.3 Data availability table",
+    "crumbs": [
+      "<span class='chapter-number'>7</span>  <span class='chapter-title'>Phenology</span>"
     ]
   }
 ]
