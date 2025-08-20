@@ -85,3 +85,45 @@ EOS dates within each Admin 1 area. These admin 1 names match with the admin 1
 names in the @sec-boundaries admin boundaries dataset. This allows for easier
 comparison across regions and integration with other spatial datasets, such as
 crop or livestock VoP and population exposure.
+
+## Data availability table
+
+```{r}
+#| echo: false
+library(s3fs)
+library(DT)
+s3 <- s3fs::S3FileSystem$new() # TODO: make public --URGENT!
+s3_paths <- s3$dir_ls(
+  "digital-atlas/domain=phenology/type=sos_eos/source=glass_nvdi/region=africa/processing=raw/level=adm1/"
+)
+split_paths <- strsplit(sub("^s3://digital-atlas/", "", s3_paths), "/")
+
+df <- do.call(
+  rbind,
+  lapply(split_paths, function(parts) {
+    kv <- parts[grepl("=", parts)]
+    keys <- sapply(strsplit(kv, "="), `[`, 1)
+    values <- sapply(strsplit(kv, "="), `[`, 2)
+    res <- setNames(values, keys)
+    res["filename"] <- parts[length(parts)]
+    # Ensure all columns exist
+    all_cols <- c(
+      "domain",
+      "type",
+      "source",
+      "region",
+      "processing",
+      "level",
+      "filename"
+    )
+    res[setdiff(all_cols, names(res))] <- NA
+    res[all_cols]
+  })
+)
+
+df <- as.data.frame(df, stringsAsFactors = FALSE)
+df$s3_path <- s3_paths
+
+# Drop first domain column as all domain = Boundaries
+datatable(df[-1], rownames = FALSE)
+```
