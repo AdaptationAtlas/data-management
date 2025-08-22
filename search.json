@@ -14,7 +14,17 @@
     "href": "intro.html",
     "title": "1  Introduction",
     "section": "",
-    "text": "This is a book created from markdown and executable code.\nSee Knuth (1984) for additional discussion of literate programming.\n\n\n\n\nKnuth, Donald E. 1984. “Literate Programming.” Comput. J. 27 (2): 97–111. https://doi.org/10.1093/comjnl/27.2.97.",
+    "text": "1.1 Useful Links\nThis book is a practical guide to the technical side of the Africa Agriculture Adaptation Atlas. Here you will find guidence on our data and methods with the aim of making it easier for everyone to generate, share, and apply insights that drive climate adaptation.\nIt is meant for anyone who wants to contribute. This can be through sharing datasets, building new data explorations, or reusing the Atlas structure for their own work.\nThe Atlas is built on collaboration. By combining expertise across climate, agriculture, and development, it connects valuable data with the decision-makers who need it most. To support this, we have designed the platform to be open, adaptable, and easy to build upon.",
+    "crumbs": [
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Introduction</span>"
+    ]
+  },
+  {
+    "objectID": "intro.html#useful-links",
+    "href": "intro.html#useful-links",
+    "title": "1  Introduction",
+    "section": "",
+    "text": "GitHub\nData Explorations\nAdaptation Atlas Website",
     "crumbs": [
       "<span class='chapter-number'>1</span>  <span class='chapter-title'>Introduction</span>"
     ]
