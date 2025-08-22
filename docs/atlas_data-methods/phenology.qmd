@@ -63,6 +63,10 @@ phenology dataset, and the recommended variable for robust seasonal analysis is
 SOS/EOS to produce more stable season lengths. Other thresholds (**rain_trs2,
 rain_trs5, rain_greenup_senescence**) are also provided but are less robust.
 
+The kenya file is found
+[on the Atlas S3](https://digital-atlas.s3.amazonaws.com/digital-atlas/domain=phenology/type=sos_eos/source=glass_nvdi/region=africa/processing=raw/level=adm1/KEN_seasonal-phenology_plus-rain.parquet).
+The file name is "KEN_seasonal-phenology_plus-rain.parquet".
+
 ### Units Table
 
 | Variable                | Description                                                  | Unit |
@@ -92,7 +96,7 @@ crop or livestock VoP and population exposure.
 #| echo: false
 library(s3fs)
 library(DT)
-s3 <- s3fs::S3FileSystem$new() # TODO: make public --URGENT!
+s3 <- s3fs::S3FileSystem$new(anonymous = TRUE)
 s3_paths <- s3$dir_ls(
   "digital-atlas/domain=phenology/type=sos_eos/source=glass_nvdi/region=africa/processing=raw/level=adm1/"
 )

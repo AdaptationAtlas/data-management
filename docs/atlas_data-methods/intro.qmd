@@ -1,5 +1,21 @@
 # Introduction
 
-This is a book created from markdown and executable code.
+This book is a practical guide to the technical side of the Africa Agriculture
+Adaptation Atlas. Here you will find guidence on our data and methods with the
+aim of making it easier for everyone to generate, share, and apply insights that
+drive climate adaptation.
 
-See @knuth84 for additional discussion of literate programming.
+It is meant for anyone who wants to contribute. This can be through sharing
+datasets, building new data explorations, or reusing the Atlas structure for
+their own work.
+
+The Atlas is built on collaboration. By combining expertise across climate,
+agriculture, and development, it connects valuable data with the decision-makers
+who need it most. To support this, we have designed the platform to be open,
+adaptable, and easy to build upon.
+
+## Useful Links
+
+- [GitHub](https://github.com/AdaptationAtlas)
+- [Data Explorations](https://observablehq.com/@adaptationatlas)
+- [Adaptation Atlas Website](https://adaptationatlas.cgiar.org/)
