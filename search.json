@@ -224,7 +224,7 @@
     "href": "phenology.html",
     "title": "7  Phenology",
     "section": "",
-    "text": "7.1 Start of Season (SOS) and End of Season (EOS)\nThis dataset provides subnational estimates of key seasonal metrics for crop and vegetation systems, derived from remote sensing and climate data. It captures temporal patterns in vegetation growth to support agricultural planning and climate risk assessment.\nThis dataset provides subnational estimates of seasonal timing derived from GLASS 8-day NDVI data using the Phenofit framework and R package. ahhhh",
+    "text": "7.1 Start of Season (SOS) and End of Season (EOS)\nThis dataset provides subnational estimates of key seasonal metrics for crop and vegetation systems, derived from remote sensing and climate data. It captures temporal patterns in vegetation growth to support agricultural planning and climate risk assessment.\nThis dataset provides subnational estimates of seasonal timing derived from GLASS 8-day NDVI data using the Phenofit framework and R package.",
     "crumbs": [
       "<span class='chapter-number'>7</span>  <span class='chapter-title'>Phenology</span>"
     ]
@@ -257,6 +257,16 @@
     "text": "7.3 Data availability table",
     "crumbs": [
       "<span class='chapter-number'>7</span>  <span class='chapter-title'>Phenology</span>"
+    ]
+  },
+  {
+    "objectID": "glossary.html",
+    "href": "glossary.html",
+    "title": "8  Glossary",
+    "section": "",
+    "text": "This is a work in progress and will contain definitions for many of the more technical terms found in the Adaptation Atlas.",
+    "crumbs": [
+      "<span class='chapter-number'>8</span>  <span class='chapter-title'>Glossary</span>"
     ]
   }
 ]
